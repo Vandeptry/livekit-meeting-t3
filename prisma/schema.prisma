@@ -1,0 +1,1299 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id          String        @id
+  userId      String
+  title       String
+  coverImg    String?
+  createdAt   DateTime      @default(now())
+  forumId     String?
+  status      String        @default("approved")
+  isPinned    Boolean       @default(false)
+  Comment     Comment[]
+  EmojiDetail EmojiDetail[]
+  Newfeed     Newfeed[]
+  Forum       Forum?        @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  User        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PostDetail  PostDetail?
+  PostHashtag PostHashtag[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                                             String               @id @default(cuid())
+  name                                           String?
+  email                                          String?              @unique
+  image                                          String?
+  createdAt                                      DateTime             @default(now())
+  password                                       String?
+  username                                       String?              @unique
+  emailVerified                                  DateTime?
+  accounts                                       Account[]
+  Application_Application_interviewOwnerIdToUser Application[]        @relation("Application_interviewOwnerIdToUser")
+  Application_Application_referrerIdToUser       Application[]        @relation("Application_referrerIdToUser")
+  ApplicationEvent                               ApplicationEvent[]
+  Candidate                                      Candidate?
+  CandidateNote                                  CandidateNote[]
+  ChatStatus                                     ChatStatus[]
+  Chatbox                                        Chatbox[]
+  Comment                                        Comment[]
+  Company                                        Company[]
+  CompanyInvite_CompanyInvite_acceptedByToUser   CompanyInvite[]      @relation("CompanyInvite_acceptedByToUser")
+  CompanyInvite_CompanyInvite_invitedByIdToUser  CompanyInvite[]      @relation("CompanyInvite_invitedByIdToUser")
+  CompanyInvite_CompanyInvite_userIdToUser       CompanyInvite[]      @relation("CompanyInvite_userIdToUser")
+  CompanyMember                                  CompanyMember[]
+  EmojiDetail                                    EmojiDetail[]
+  Follower_Follower_followerIdToUser             Follower[]           @relation("Follower_followerIdToUser")
+  Follower_Follower_followingIdToUser            Follower[]           @relation("Follower_followingIdToUser")
+  Forum                                          Forum[]
+  ForumInvite_ForumInvite_invitedByToUser        ForumInvite[]        @relation("ForumInvite_invitedByToUser")
+  ForumInvite_ForumInvite_userIdToUser           ForumInvite[]        @relation("ForumInvite_userIdToUser")
+  ForumJoinRequest                               ForumJoinRequest[]
+  ForumMember                                    ForumMember[]
+  ForumTrustRequest                              ForumTrustRequest[]
+  Interview                                      Interview[]
+  InterviewFeedback                              InterviewFeedback[]
+  Interviewer                                    Interviewer[]
+  Job_Job_approverIdToUser                       Job[]                @relation("Job_approverIdToUser")
+  Job_Job_createdByIdToUser                      Job[]                @relation("Job_createdByIdToUser")
+  Message                                        Message[]
+  Newfeed                                        Newfeed[]
+  Notification                                   Notification[]
+  OTP                                            OTP[]
+  Offer_Offer_createdByIdToUser                  Offer[]              @relation("Offer_createdByIdToUser")
+  Offer_Offer_updatedByIdToUser                  Offer[]              @relation("Offer_updatedByIdToUser")
+  Offer_Offer_userIdToUser                       Offer[]              @relation("Offer_userIdToUser")
+  PasswordResetToken                             PasswordResetToken[]
+  Portfolio                                      Portfolio[]
+  Post                                           Post[]
+  Profile                                        Profile?
+  ScorecardTemplate                              ScorecardTemplate[]
+  sessions                                       Session[]
+  UserChatbox                                    UserChatbox[]
+  UserHabit                                      UserHabit[]
+  UserInfo                                       UserInfo?
+  UserLink                                       UserLink[]
+  UserSession                                    UserSession[]
+  UserSetting                                    UserSetting?
+  UserStatus                                     UserStatus?
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Admin {
+  id        String      @id
+  email     String      @unique
+  password  String
+  name      String?
+  username  String?     @unique
+  role      String      @default("admin")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime
+  image     String?
+  BackupLog BackupLog[]
+}
+
+model Application {
+  id                                      String                      @id
+  jobId                                   String
+  candidateId                             String
+  source                                  Source                      @default(direct)
+  referrerId                              String?
+  status                                  ApplicationStatus           @default(applied)
+  currentStageId                          String?
+  score                                   Float?
+  coverLetter                             String?
+  answers                                 Json?
+  cvUrl                                   String?
+  portfolioId                             String?
+  contactName                             String?
+  contactEmail                            String?
+  contactPhone                            String?
+  profileSnapshot                         Json?
+  tracking                                Json?
+  createdAt                               DateTime                    @default(now())
+  updatedAt                               DateTime
+  rejectedAt                              DateTime?
+  rejectionReason                         RejectionReason?
+  rejectionNote                           String?
+  chatboxId                               String?
+  interviewOwnerId                        String?
+  priority                                ApplicationPriority         @default(medium)
+  screeningScore                          Float?
+  Candidate                               Candidate                   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  Chatbox                                 Chatbox?                    @relation(fields: [chatboxId], references: [id])
+  JobStage                                JobStage?                   @relation(fields: [currentStageId], references: [id])
+  User_Application_interviewOwnerIdToUser User?                       @relation("Application_interviewOwnerIdToUser", fields: [interviewOwnerId], references: [id])
+  Job                                     Job                         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  Portfolio                               Portfolio?                  @relation(fields: [portfolioId], references: [id])
+  User_Application_referrerIdToUser       User?                       @relation("Application_referrerIdToUser", fields: [referrerId], references: [id])
+  ApplicationAttachment                   ApplicationAttachment[]
+  ApplicationEvent                        ApplicationEvent[]
+  ApplicationTag                          ApplicationTag[]
+  CandidateApplicationWatch               CandidateApplicationWatch[]
+  Interview                               Interview[]
+  InterviewFeedback                       InterviewFeedback[]
+  Offer                                   Offer?
+
+  @@unique([jobId, candidateId])
+  @@index([currentStageId])
+  @@index([interviewOwnerId])
+  @@index([priority])
+  @@index([status, createdAt])
+}
+
+model ApplicationAttachment {
+  id            String      @id
+  applicationId String
+  url           String
+  name          String?
+  meta          Json?
+  createdAt     DateTime    @default(now())
+  Application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationEvent {
+  id            String      @id
+  applicationId String
+  actorId       String?
+  type          String
+  data          Json?
+  createdAt     DateTime    @default(now())
+  User          User?       @relation(fields: [actorId], references: [id])
+  Application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+}
+
+model ApplicationTag {
+  id            String      @id
+  applicationId String
+  name          String
+  Application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, name])
+}
+
+model BackupLog {
+  id         String       @id
+  filename   String
+  status     BackupStatus @default(running)
+  startedAt  DateTime     @default(now())
+  finishedAt DateTime?
+  durationMs Int?
+  sizeBytes  BigInt?
+  tableCount Int
+  rowCount   BigInt?
+  error      String?
+  meta       Json?
+  adminId    String?
+  Admin      Admin?       @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([startedAt(sort: Desc)])
+}
+
+model Candidate {
+  id                        String                      @id
+  userId                    String?                     @unique
+  fullName                  String
+  email                     String                      @unique
+  phone                     String?
+  headline                  String?
+  location                  String?
+  links                     Json?
+  resumeUrl                 String?
+  resumeMeta                Json?
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime
+  Application               Application[]
+  User                      User?                       @relation(fields: [userId], references: [id])
+  CandidateApplicationWatch CandidateApplicationWatch[]
+  CandidateAttachment       CandidateAttachment[]
+  CandidateCompanyFollow    CandidateCompanyFollow[]
+  CandidateJobFollow        CandidateJobFollow[]
+  CandidateJobView          CandidateJobView[]
+  CandidateNote             CandidateNote[]
+  CandidateTagLink          CandidateTagLink[]
+
+  @@index([fullName])
+}
+
+model CandidateApplicationWatch {
+  id             String      @id
+  candidateId    String
+  applicationId  String
+  createdAt      DateTime    @default(now())
+  notifyOnChange Boolean     @default(true)
+  Application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  Candidate      Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, applicationId])
+  @@index([applicationId])
+}
+
+model CandidateAttachment {
+  id          String    @id
+  candidateId String
+  url         String
+  name        String?
+  meta        Json?
+  createdAt   DateTime  @default(now())
+  Candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+model CandidateCompanyFollow {
+  id             String    @id
+  candidateId    String
+  companyId      String
+  createdAt      DateTime  @default(now())
+  notifyOnUpdate Boolean   @default(true)
+  Candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  Company        Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, companyId])
+  @@index([companyId, createdAt])
+}
+
+model CandidateJobFollow {
+  id             String    @id
+  candidateId    String
+  jobId          String
+  createdAt      DateTime  @default(now())
+  notifyOnUpdate Boolean   @default(true)
+  Candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  Job            Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, jobId])
+  @@index([jobId, createdAt])
+}
+
+model CandidateJobView {
+  id          String    @id
+  candidateId String
+  jobId       String
+  viewedAt    DateTime  @default(now())
+  Candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  Job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, jobId])
+  @@index([jobId, viewedAt])
+}
+
+model CandidateNote {
+  id          String    @id
+  candidateId String
+  authorId    String
+  visibility  String    @default("internal")
+  body        String
+  createdAt   DateTime  @default(now())
+  User        User      @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  Candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId, createdAt])
+}
+
+model CandidateTagLink {
+  id          String     @id
+  candidateId String
+  tagId       String
+  Candidate   Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  CompanyTag  CompanyTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, tagId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ChatStatus {
+  id        String  @id
+  messageId String
+  userId    String
+  status    String
+  Message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId], map: "uq_chatstatus_message_user")
+  @@index([messageId])
+  @@index([userId])
+}
+
+model ChatTheme {
+  id     String @id
+  name   String
+  config Json
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Chatbox {
+  id            String         @id
+  name          String?
+  createdAt     DateTime       @default(now())
+  avatar        String?
+  createdById   String?
+  description   String?
+  isActive      Boolean        @default(true)
+  lastMessageAt DateTime?
+  metadata      Json?
+  privacy       ChatboxPrivacy @default(PRIVATE)
+  type          ChatboxType    @default(DIRECT)
+  updatedAt     DateTime       @default(now())
+  Application   Application[]
+  User          User?          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  Message       Message[]
+  UserChatbox   UserChatbox[]
+
+  @@index([createdAt])
+  @@index([createdById])
+  @@index([lastMessageAt])
+  @@index([type, createdAt(sort: Desc)])
+}
+
+model Comment {
+  id            String        @id
+  postId        String
+  userId        String
+  content       String
+  createdAt     DateTime      @default(now())
+  parentId      String?
+  meta          Json?
+  Comment       Comment?      @relation("CommentToComment", fields: [parentId], references: [id])
+  other_Comment Comment[]     @relation("CommentToComment")
+  Post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  EmojiDetail   EmojiDetail[]
+
+  @@index([postId])
+}
+
+model Company {
+  id                     String                   @id
+  name                   String
+  slug                   String                   @unique
+  logoUrl                String?
+  bannerUrl              String?
+  visibility             CompanyVisibility        @default(public)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  contactEmail           String?
+  createdById            String
+  status                 CompanyStatus            @default(pending)
+  CandidateCompanyFollow CandidateCompanyFollow[]
+  User                   User                     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  CompanyInvite          CompanyInvite[]
+  CompanyLocation        CompanyLocation[]
+  CompanyMember          CompanyMember[]
+  CompanyProfile         CompanyProfile?
+  CompanyRole            CompanyRole[]
+  CompanyTag             CompanyTag[]
+  CompanyTeam            CompanyTeam[]
+  Job                    Job[]
+  ScorecardTemplate      ScorecardTemplate[]
+
+  @@index([createdById])
+  @@index([name])
+}
+
+model CompanyInvite {
+  id                                   String       @id
+  companyId                            String
+  email                                String
+  roleId                               String?
+  token                                String       @unique
+  expiresAt                            DateTime
+  invitedById                          String?
+  acceptedBy                           String?
+  createdAt                            DateTime     @default(now())
+  userId                               String?
+  User_CompanyInvite_acceptedByToUser  User?        @relation("CompanyInvite_acceptedByToUser", fields: [acceptedBy], references: [id])
+  Company                              Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  User_CompanyInvite_invitedByIdToUser User?        @relation("CompanyInvite_invitedByIdToUser", fields: [invitedById], references: [id])
+  CompanyRole                          CompanyRole? @relation(fields: [roleId], references: [id])
+  User_CompanyInvite_userIdToUser      User?        @relation("CompanyInvite_userIdToUser", fields: [userId], references: [id])
+
+  @@unique([companyId, email])
+}
+
+model CompanyLocation {
+  id        String  @id
+  companyId String
+  label     String
+  country   String?
+  state     String?
+  city      String?
+  address1  String?
+  address2  String?
+  postal    String?
+  isPrimary Boolean @default(false)
+  Company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Job       Job[]
+
+  @@index([companyId, city])
+}
+
+model CompanyMember {
+  id          String              @id
+  companyId   String
+  userId      String
+  roleId      String?
+  status      CompanyMemberStatus @default(invited)
+  invitedBy   String?
+  joinedAt    DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime
+  allow       PermissionKey[]     @default([])
+  deny        PermissionKey[]     @default([])
+  Company     Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  CompanyRole CompanyRole?        @relation(fields: [roleId], references: [id])
+  User        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([roleId])
+}
+
+model CompanyProfile {
+  id          String  @id
+  companyId   String  @unique
+  about       String?
+  website     String?
+  foundedYear Int?
+  sizeFrom    Int?
+  sizeTo      Int?
+  industry    String?
+  socials     Json?
+  Company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model CompanyRole {
+  id            String          @id
+  companyId     String
+  name          String
+  permissions   PermissionKey[]
+  CompanyInvite CompanyInvite[]
+  CompanyMember CompanyMember[]
+  Company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, name])
+}
+
+model CompanyTag {
+  id               String             @id
+  companyId        String
+  name             String
+  color            String?
+  CandidateTagLink CandidateTagLink[]
+  Company          Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, name])
+}
+
+model CompanyTeam {
+  id        String  @id
+  companyId String
+  name      String
+  Company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Job       Job[]
+
+  @@unique([companyId, name])
+}
+
+model Education {
+  id          String    @id
+  schoolName  String
+  linkImg     String?
+  major       String
+  startYear   Int
+  endYear     Int?
+  endMonth    Int?
+  portfolioId String
+  startMonth  Int
+  Portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Emoji {
+  id          String        @id
+  name        String
+  icon        String
+  EmojiDetail EmojiDetail[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model EmojiDetail {
+  id        String   @id
+  emojiId   String
+  postId    String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  commentId String?
+  messageId String?
+  isActive  Boolean  @default(true)
+  Comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  Emoji     Emoji    @relation(fields: [emojiId], references: [id], onDelete: Cascade)
+  Message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  Post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@unique([userId, messageId])
+  @@unique([userId, postId])
+  @@index([emojiId])
+  @@index([messageId])
+}
+
+model Feature {
+  id      String  @id
+  key     String  @unique
+  label   String
+  icon    String?
+  visible Boolean @default(true)
+  order   Int?
+  route   String?
+}
+
+model Follower {
+  id                              String   @id
+  followerId                      String
+  followingId                     String
+  status                          String
+  createdAt                       DateTime @default(now())
+  User_Follower_followerIdToUser  User     @relation("Follower_followerIdToUser", fields: [followerId], references: [id], onDelete: Cascade)
+  User_Follower_followingIdToUser User     @relation("Follower_followingIdToUser", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model Forum {
+  id                String              @id
+  name              String
+  createdBy         String
+  createdAt         DateTime            @default(now())
+  isPublic          Boolean             @default(true)
+  trustLevel        String              @default("none")
+  User              User                @relation(fields: [createdBy], references: [id])
+  ForumContent      ForumContent[]
+  ForumDetail       ForumDetail?
+  ForumInvite       ForumInvite[]
+  ForumJoinRequest  ForumJoinRequest[]
+  ForumMember       ForumMember[]
+  ForumTrustRequest ForumTrustRequest[]
+  Post              Post[]
+}
+
+model ForumContent {
+  id        String   @id
+  forumId   String
+  type      String
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+  Forum     Forum    @relation(fields: [forumId], references: [id], onDelete: Cascade)
+}
+
+model ForumDetail {
+  id      String  @id
+  forumId String  @unique
+  desc    String?
+  banner  String?
+  Forum   Forum   @relation(fields: [forumId], references: [id], onDelete: Cascade)
+}
+
+model ForumInvite {
+  id                               String   @id
+  forumId                          String
+  userId                           String
+  invitedBy                        String
+  status                           String   @default("pending")
+  createdAt                        DateTime @default(now())
+  Forum                            Forum    @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  User_ForumInvite_invitedByToUser User     @relation("ForumInvite_invitedByToUser", fields: [invitedBy], references: [id], onDelete: Cascade)
+  User_ForumInvite_userIdToUser    User     @relation("ForumInvite_userIdToUser", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ForumJoinRequest {
+  id        String   @id
+  forumId   String
+  userId    String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  Forum     Forum    @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([forumId, userId])
+}
+
+model ForumMember {
+  id       String   @id
+  userId   String
+  forumId  String
+  role     String
+  joinedAt DateTime @default(now())
+  Forum    Forum    @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ForumTrustRequest {
+  id          String   @id
+  forumId     String
+  requestedBy String
+  status      String   @default("pending")
+  level       String
+  reason      String?
+  createdAt   DateTime @default(now())
+  Forum       Forum    @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  User        User     @relation(fields: [requestedBy], references: [id], onDelete: Cascade)
+}
+
+model Hashtag {
+  id          String        @id
+  name        String        @unique
+  PostHashtag PostHashtag[]
+}
+
+model Interview {
+  id                   String                      @id
+  applicationId        String
+  type                 InterviewType               @default(online)
+  roundOrder           Int                         @default(1)
+  title                String?
+  startAt              DateTime
+  endAt                DateTime
+  timezone             String?
+  location             String?
+  meetingUrl           String?
+  status               InterviewStatus             @default(scheduled)
+  createdById          String
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime
+  autoScheduled        Boolean                     @default(false)
+  batchLabel           String?
+  candidateConfirmedAt DateTime?
+  candidateDeclinedAt  DateTime?
+  confirmationStatus   InterviewConfirmationStatus @default(awaiting_candidate)
+  inviteSentAt         DateTime?
+  Application          Application                 @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  User                 User                        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  InterviewFeedback    InterviewFeedback[]
+  Interviewer          Interviewer[]
+
+  @@index([applicationId, startAt])
+}
+
+model InterviewFeedback {
+  id             String      @id
+  interviewId    String
+  applicationId  String
+  interviewerId  String
+  submittedAt    DateTime?
+  recommendation String?
+  scores         Json?
+  notesMd        String?
+  Application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  Interview      Interview   @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  User           User        @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, interviewerId])
+  @@index([applicationId])
+}
+
+model Interviewer {
+  id          String    @id
+  interviewId String
+  userId      String
+  role        String?
+  Interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, userId])
+}
+
+model Job {
+  id                         String               @id
+  companyId                  String
+  teamId                     String?
+  locationId                 String?
+  title                      String
+  slug                       String               @unique
+  status                     JobStatus            @default(draft)
+  descriptionMd              String
+  requirementsMd             String?
+  responsibilitiesMd         String?
+  benefitsMd                 String?
+  workMode                   WorkMode             @default(onsite)
+  employmentType             EmploymentType       @default(full_time)
+  seniority                  Seniority?
+  salaryMin                  Int?
+  salaryMax                  Int?
+  currency                   Currency?            @default(VND)
+  payPeriod                  PayPeriod?           @default(monthly)
+  equityInfo                 String?
+  isSalaryVisible            Boolean              @default(false)
+  createdById                String
+  publishedAt                DateTime?
+  closedAt                   DateTime?
+  deadline                   DateTime?
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime
+  approverId                 String?
+  autoReopenUntil            DateTime?
+  headcountTarget            Int?
+  reopenCount                Int                  @default(0)
+  Application                Application[]
+  CandidateJobFollow         CandidateJobFollow[]
+  CandidateJobView           CandidateJobView[]
+  User_Job_approverIdToUser  User?                @relation("Job_approverIdToUser", fields: [approverId], references: [id])
+  Company                    Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  User_Job_createdByIdToUser User                 @relation("Job_createdByIdToUser", fields: [createdById], references: [id], onDelete: SetNull)
+  CompanyLocation            CompanyLocation?     @relation(fields: [locationId], references: [id])
+  CompanyTeam                CompanyTeam?         @relation(fields: [teamId], references: [id])
+  JobQuestion                JobQuestion[]
+  JobStage                   JobStage[]
+  JobTag                     JobTag[]
+
+  @@index([companyId, status, publishedAt])
+  @@index([locationId])
+  @@index([teamId])
+}
+
+model JobQuestion {
+  id       String  @id
+  jobId    String
+  order    Int     @default(0)
+  label    String
+  type     String
+  required Boolean @default(false)
+  options  String?
+  Job      Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, order])
+}
+
+model JobStage {
+  id          String        @id
+  jobId       String
+  key         String
+  name        String
+  order       Int           @default(0)
+  Application Application[]
+  Job         Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, key])
+  @@index([jobId, order])
+}
+
+model JobTag {
+  id    String @id
+  jobId String
+  name  String
+  Job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, name])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Message {
+  id            String        @id
+  senderId      String
+  chatboxId     String
+  content       String
+  sentAt        DateTime      @default(now())
+  editedAt      DateTime?
+  isEdited      Boolean       @default(false)
+  meta          Json?
+  parentId      String?
+  ChatStatus    ChatStatus[]
+  EmojiDetail   EmojiDetail[]
+  Chatbox       Chatbox       @relation(fields: [chatboxId], references: [id], onDelete: Cascade)
+  Message       Message?      @relation("MessageToMessage", fields: [parentId], references: [id], onDelete: Cascade)
+  other_Message Message[]     @relation("MessageToMessage")
+  User          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([parentId])
+  @@index([senderId, sentAt(sort: Desc)])
+  @@index([chatboxId, sentAt(sort: Desc)], map: "idx_message_chatbox_sentat_desc")
+  @@index([chatboxId, parentId, sentAt(sort: Desc)], map: "idx_msg_chat_parent_sentat")
+}
+
+model Milestone {
+  id             String           @id
+  portfolioId    String
+  type           String
+  title          String
+  Portfolio      Portfolio        @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  MilestoneBlock MilestoneBlock[]
+}
+
+model MilestoneBlock {
+  id          String    @id
+  milestoneId String
+  title       String
+  content     String
+  imageUrl    String?
+  Milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+}
+
+model Newfeed {
+  id        String   @id
+  userId    String
+  postId    String
+  score     Float
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model Notification {
+  id        String   @id
+  userId    String
+  type      String
+  content   String
+  isRead    Boolean  @default(false)
+  linkTo    String?
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OTP {
+  id        String   @id
+  email     String   @unique
+  code      String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  userId    String?
+  attemps   Int      @default(0)
+  User      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Offer {
+  id                           String      @id
+  applicationId                String      @unique
+  status                       OfferStatus @default(draft)
+  baseSalary                   Int?
+  currency                     Currency?   @default(VND)
+  payPeriod                    PayPeriod?  @default(monthly)
+  equityInfo                   String?
+  bonusInfo                    String?
+  benefitsMd                   String?
+  startDate                    DateTime?
+  expiresAt                    DateTime?
+  sentAt                       DateTime?
+  acceptedAt                   DateTime?
+  declinedAt                   DateTime?
+  declineReason                String?
+  createdById                  String?
+  updatedById                  String?
+  userId                       String?
+  Application                  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  User_Offer_createdByIdToUser User?       @relation("Offer_createdByIdToUser", fields: [createdById], references: [id])
+  User_Offer_updatedByIdToUser User?       @relation("Offer_updatedByIdToUser", fields: [updatedById], references: [id])
+  User_Offer_userIdToUser      User?       @relation("Offer_userIdToUser", fields: [userId], references: [id])
+}
+
+model PasswordResetToken {
+  id        String   @id
+  email     String   @unique
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Portfolio {
+  id             String          @id
+  userId         String
+  title          String?
+  createdAt      DateTime        @default(now())
+  about          String?
+  fullname       String
+  position       String?
+  img            String?
+  cvUrl          String?
+  Application    Application[]
+  Education      Education[]
+  Milestone      Milestone[]
+  User           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PortfolioTheme PortfolioTheme?
+  Skill          Skill[]
+}
+
+model PortfolioTheme {
+  id          String            @id
+  portfolioId String            @unique
+  template    PortfolioTemplate
+  accent      String?
+  settings    Json?
+  updatedAt   DateTime
+  Portfolio   Portfolio         @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}
+
+model PostDetail {
+  id        String   @id
+  postId    String   @unique
+  content   String
+  meta      Json?
+  updatedAt DateTime @default(now())
+  Post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model PostHashtag {
+  id        String   @id
+  postId    String
+  hashtagId String
+  addedAt   DateTime @default(now())
+  Hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  Post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Profile {
+  id            String          @id
+  userId        String          @unique
+  totalPosts    Int             @default(0)
+  totalLikes    Int             @default(0)
+  totalShares   Int             @default(0)
+  createdAt     DateTime        @default(now())
+  User          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ProfileDetail ProfileDetail[]
+}
+
+model ProfileDetail {
+  id          String   @id
+  profileId   String
+  type        String
+  refId       String
+  description String?
+  createdAt   DateTime @default(now())
+  Profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model ScorecardTemplate {
+  id          String   @id
+  companyId   String
+  name        String
+  sections    Json
+  createdById String
+  createdAt   DateTime @default(now())
+  Company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  User        User     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+model Skill {
+  id          String    @id
+  name        String
+  type        String
+  portfolioId String
+  Portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}
+
+model Theme {
+  id          String        @id
+  name        String
+  UserSetting UserSetting[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model UserChatbox {
+  id        String  @id
+  userId    String
+  chatboxId String
+  role      String?
+  Chatbox   Chatbox @relation(fields: [chatboxId], references: [id], onDelete: Cascade)
+  User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatboxId, userId], map: "uq_userchatbox_chatbox_user")
+  @@index([chatboxId])
+  @@index([userId])
+}
+
+model UserHabit {
+  id        String   @id
+  userId    String
+  topic     String
+  weight    Float
+  updatedAt DateTime @default(now())
+  type      String
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topic, type])
+  @@index([userId, updatedAt])
+}
+
+model UserInfo {
+  id       String    @id
+  userId   String    @unique
+  bio      String?
+  phone    String?
+  birthday DateTime?
+  User     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserLink {
+  id     String @id
+  userId String
+  label  String
+  url    String
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSession {
+  id         String   @id
+  userId     String
+  token      String   @unique
+  active     Boolean  @default(true)
+  lastUsed   DateTime @default(now())
+  deviceName String
+  deviceType String
+  identifier String
+  ipAddress  String?
+  lastLogin  DateTime @default(now())
+  location   String?
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceType, identifier])
+}
+
+model UserSetting {
+  id      String  @id
+  userId  String  @unique
+  themeId String?
+  Theme   Theme?  @relation(fields: [themeId], references: [id])
+  User    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserStatus {
+  userId     String   @id
+  isOnline   Boolean  @default(false)
+  showOnline Boolean  @default(true)
+  lastSeen   DateTime
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ApplicationPriority {
+  low
+  medium
+  high
+  critical
+}
+
+enum ApplicationStatus {
+  applied
+  screening
+  shortlisted
+  interview_scheduled
+  interviewing
+  reference_check
+  offered
+  hired
+  rejected
+  withdrawn
+}
+
+enum BackupStatus {
+  running
+  success
+  failed
+}
+
+enum ChatboxPrivacy {
+  PRIVATE
+  PUBLIC
+}
+
+enum ChatboxType {
+  DIRECT
+  GROUP
+}
+
+enum CompanyMemberStatus {
+  active
+  invited
+  suspended
+  left
+}
+
+enum CompanyStatus {
+  pending
+  approved
+  rejected
+}
+
+enum CompanyVisibility {
+  public
+  unlisted
+  private
+}
+
+enum Currency {
+  VND
+  USD
+  EUR
+  JPY
+  KRW
+  AUD
+  SGD
+}
+
+enum EmploymentType {
+  full_time
+  part_time
+  contract
+  internship
+  temporary
+  freelance
+}
+
+enum InterviewConfirmationStatus {
+  awaiting_candidate
+  confirmed
+  declined
+}
+
+enum InterviewStatus {
+  scheduled
+  completed
+  canceled
+  no_show
+  reschedule_requested
+}
+
+enum InterviewType {
+  phone
+  online
+  onsite
+  take_home
+}
+
+enum JobStatus {
+  draft
+  published
+  paused
+  closed
+}
+
+enum OfferStatus {
+  draft
+  sent
+  accepted
+  declined
+  expired
+  withdrawn
+}
+
+enum PayPeriod {
+  monthly
+  yearly
+  hourly
+  per_project
+}
+
+enum PermissionKey {
+  JOB_CREATE
+  JOB_UPDATE
+  JOB_PUBLISH
+  JOB_CLOSE
+  APP_VIEW
+  APP_SCREEN
+  APP_ADVANCE
+  APP_REJECT
+  INT_CREATE
+  INT_UPDATE
+  INT_FEEDBACK
+  OFFER_CREATE
+  OFFER_SEND
+  OFFER_DECIDE
+  MEMBER_INVITE
+  MEMBER_MANAGE
+  COMPANY_EDIT
+}
+
+enum PortfolioTemplate {
+  cv_classic
+  cv_vintage
+  cv_modern
+  pf_classic
+  pf_grid
+  pf_timeline
+}
+
+enum RejectionReason {
+  not_qualified
+  salary_mismatch
+  no_show
+  withdrawn_by_candidate
+  position_filled
+  culture_mismatch
+  other
+}
+
+enum Seniority {
+  intern
+  junior
+  mid
+  senior
+  lead
+  manager
+  director
+  vp
+  c_level
+}
+
+enum Source {
+  job_board
+  company_career_page
+  referral
+  agency
+  social
+  event
+  direct
+  import
+}
+
+enum WorkMode {
+  onsite
+  hybrid
+  remote
+}

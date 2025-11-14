@@ -1,0 +1,22 @@
+{
+  "name": "agent-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@livekit/agents": "^1.0.18",
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "livekit-client": "^2.15.15",
+    "livekit-server-sdk": "^2.14.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5"
+  }
+}
