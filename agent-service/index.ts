@@ -8,21 +8,24 @@ import {
 import { fileURLToPath } from "node:url";
 import { RoomEvent } from "livekit-client";
 
-const LIVEKIT_URL = "ws://192.168.1.6:7880";
+const LIVEKIT_URL = "wss://95d3de070559.ngrok-free.app";
 const LIVEKIT_API_KEY = "devkey";
 const LIVEKIT_API_SECRET = "phamdinhvan19022004quadeptrySUPER-SECRET-KEY-99999";
 
-const agent = defineAgent({
+export default defineAgent({
   entry: async (ctx: JobContext) => {
     console.log("[AGENT] Job started in room:", ctx.job.room?.name);
 
     await ctx.connect();
     const room = ctx.room;
-    if (!room) return;
+    if (!room) {
+      console.log("[AGENT] No room found");
+      return;
+    }
 
     console.log("[AGENT] Agent connected to room:", room.name);
 
-    // Gửi lời chào
+    // chào
     if (room.localParticipant) {
       await room.localParticipant.publishData(
         new TextEncoder().encode(
@@ -47,6 +50,7 @@ const agent = defineAgent({
   },
 });
 
+// Worker CLI
 cli.runApp(
   new WorkerOptions({
     agent: fileURLToPath(import.meta.url),

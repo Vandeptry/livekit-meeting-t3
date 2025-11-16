@@ -11,8 +11,7 @@ const ROOMS = [
   { id: "dev-room-3", name: "Phòng 3: Khách hàng" },
 ];
 
-// LiveKit server
-const livekitHost = "http://192.168.1.6:7880";
+const livekitHost = "https://95d3de070559.ngrok-free.app";
 // const livekitHost = "http://192.168.1.43:7880";
 const apiKey = "devkey";
 const apiSecret = "phamdinhvan19022004quadeptrySUPER-SECRET-KEY-99999";

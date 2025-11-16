@@ -1,16 +1,16 @@
-// src/app/[id]/livekit-rom-client.tsx
+//src/app/[id]/livekit-rom-client.tsx
 "use client";
 
 import { useEffect, useRef, useState, type JSX } from "react";
 import {
   Room,
-  createLocalTracks,
   ConnectionState,
   type LocalTrack,
+  RoomEvent,
 } from "livekit-client";
 import { registerRoomEvents } from "./livekit-events";
 
-const LIVEKIT_URL = "ws://192.168.1.6:7880";
+const LIVEKIT_URL = "wss://95d3de070559.ngrok-free.app";
 
 interface LivekitRoomProps {
   roomName: string;
@@ -23,22 +23,29 @@ export function LivekitRoom({
 }: LivekitRoomProps): JSX.Element {
   const [status, setStatus] = useState("Đang khởi tạo...");
   const localMediaRef = useRef<HTMLDivElement>(null!);
-  const room = useRef<Room | null>(null);
+
+  const roomRef = useRef<Room | null>(null);
   const publishedLocalTracks = useRef<LocalTrack[]>([]);
-  const isConnected = useRef(false);
+  const isConnectedOnce = useRef(false);
 
   const performDisconnect = (): void => {
-    const r = room.current;
-    if (r && r.state !== ConnectionState.Disconnected) {
-      void r.disconnect();
+    const room = roomRef.current;
+
+    if (room && room.state !== ConnectionState.Disconnected) {
+      void room.disconnect();
+
       publishedLocalTracks.current.forEach((t) => {
         t.detach();
         t.stop();
       });
+
       publishedLocalTracks.current = [];
     }
-    isConnected.current = false;
-    if (localMediaRef.current) localMediaRef.current.innerHTML = "";
+
+    if (localMediaRef.current) {
+      localMediaRef.current.innerHTML = "";
+    }
+
     setStatus("Đã ngắt kết nối");
   };
 
@@ -46,24 +53,33 @@ export function LivekitRoom({
     const doConnect = async (): Promise<void> => {
       setStatus(`Đang kết nối vào phòng ${roomName}...`);
 
+      const room = new Room({
+        dynacast: true,
+        adaptiveStream: false,
+      });
+
+      roomRef.current = room;
+
+      registerRoomEvents(room, {
+        setStatus,
+        localMediaRef,
+        publishedLocalTracks,
+        isConnected: isConnectedOnce,
+      });
+
+      room.on(RoomEvent.Connected, () => {
+        isConnectedOnce.current = true;
+        setStatus("Bạn đã vào phòng — Agent đang xử lý...");
+      });
+
       try {
-        room.current = new Room({
-          dynacast: true,
-          adaptiveStream: false,
-        });
-
-        const activeRoom = room.current;
-
-        registerRoomEvents(activeRoom, {
-          setStatus,
-          localMediaRef,
-          publishedLocalTracks,
-          isConnected,
-        });
-
-        await activeRoom.connect(LIVEKIT_URL, token);
+        await room.connect(LIVEKIT_URL, token);
       } catch (err) {
-        setStatus(`Failed: ${(err as Error).message}`);
+        if (!isConnectedOnce.current) {
+          setStatus("Không thể kết nối vào phòng.");
+        } else {
+          setStatus("Phiên đã kết thúc, kết nối thành công");
+        }
       }
     };
 
@@ -71,7 +87,7 @@ export function LivekitRoom({
 
     return () => {
       performDisconnect();
-      room.current = null;
+      roomRef.current = null;
     };
   }, [roomName, token]);
 

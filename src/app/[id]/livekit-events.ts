@@ -20,11 +20,10 @@ export function registerRoomEvents(
 ): void {
   const { setStatus, localMediaRef, publishedLocalTracks, isConnected } = opts;
 
-  // Không async trực tiếp ở callback
   room.on(RoomEvent.Connected, () => {
     void (async () => {
       isConnected.current = true;
-      setStatus("Đã kết nối — Agent sẽ vào phòng");
+      setStatus("Đã kết nối — đang lấy thiết bị...");
 
       try {
         const tracks = await createLocalTracks({
@@ -74,10 +73,10 @@ export function registerRoomEvents(
   room.on(RoomEvent.DataReceived, (payload, participant) => {
     try {
       const txt = new TextDecoder().decode(payload);
-      const data = JSON.parse(txt) as Record<string, unknown>;
+      const data = JSON.parse(txt) as { type?: string; text?: string };
 
       if (data.type === "agent_message") {
-        setStatus(`🤖 Agent: ${String(data.text)}`);
+        setStatus(`Agent: ${String(data.text)}`);
         return;
       }
 
