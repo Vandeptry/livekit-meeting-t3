@@ -1,20 +1,16 @@
-version: "3.4"
 services:
   livekit:
     image: livekit/livekit-server:latest
     container_name: livekit-server
-    environment:
-      LIVEKIT_KEYS: "{\"devkey\": \"secret\"}"
-      LIVEKIT_BIND_ADDRESS: 0.0.0.0
-      LIVEKIT_PORT: 7880
-      LIVEKIT_NODE_IP: 192.168.1.43 
-      LIVEKIT_RTC_PORT: 7881
-      LIVEKIT_RTC_UDP_PORT: 7882-7982
-      LIVEKIT_RTC_USE_EXTERNAL_IP: "true" 
-      LIVEKIT_RTC_EXT_IP: ""
-      
     restart: always
+
     ports:
-      - 7880:7880
-      - 7881:7881
-      - 7882-7982:7882-7982/udp
+      - "7880:7880"
+      - "7881:7881"
+      - "3478:3478/udp"
+      - "50000-50050:50000-50050/udp"
+
+    command: --config /livekit.yaml
+
+    volumes:
+      - "C:/livekit.yaml:/livekit.yaml"

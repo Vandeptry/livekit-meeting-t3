@@ -1,0 +1,15 @@
+port: 7880
+bind_addresses:
+  - 0.0.0.0
+
+rtc:
+  node_ip: 192.168.1.6
+  use_external_ip: false
+  port_range_start: 50000
+  port_range_end: 50050
+
+logging:
+  level: debug
+
+keys:
+  devkey: phamdinhvan19022004quadeptrySUPER-SECRET-KEY-99999

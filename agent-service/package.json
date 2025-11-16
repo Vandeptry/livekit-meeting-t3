@@ -1,22 +1,19 @@
 {
-  "name": "agent-service",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "livekit-agent",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx index.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "@livekit/agents": "^1.0.18",
-    "body-parser": "^2.2.0",
-    "express": "^5.1.0",
-    "livekit-client": "^2.15.15",
-    "livekit-server-sdk": "^2.14.1"
+    "@livekit/agents": "latest",
+    "@livekit/agents-plugin-livekit": "latest",
+    "@livekit/agents-plugin-silero": "latest",
+    "@livekit/noise-cancellation-node": "latest",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
-    "@types/express": "^5.0.5"
+    "@types/node": "^24.10.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }
