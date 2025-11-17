@@ -8,7 +8,7 @@ import {
 import { fileURLToPath } from "node:url";
 import { RoomEvent } from "livekit-client";
 
-const LIVEKIT_URL = "wss://95d3de070559.ngrok-free.app";
+const LIVEKIT_URL = "wss://38f31b36b3ee.ngrok-free.app";
 const LIVEKIT_API_KEY = "devkey";
 const LIVEKIT_API_SECRET = "phamdinhvan19022004quadeptrySUPER-SECRET-KEY-99999";
 

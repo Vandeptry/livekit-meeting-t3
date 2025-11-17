@@ -30,6 +30,7 @@ export const env = createEnv({
 
     LIVEKIT_API_KEY: z.string(),
     LIVEKIT_API_SECRET: z.string(),
+    LIVEKIT_URL: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -63,6 +64,7 @@ export const env = createEnv({
 
     LIVEKIT_API_KEY: process.env.LIVEKIT_API_KEY,
     LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET,
+    LIVEKIT_URL: process.env.LIVEKIT_URL,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**

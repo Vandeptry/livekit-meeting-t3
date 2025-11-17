@@ -1151,7 +1151,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\chami\\Nexore-C\\GSS\\livekit-meeting-t3\\generated\\prisma",
+      "value": "D:\\_PhamDinhVan\\Week1\\livekit-meeting-t3\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -1165,7 +1165,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\chami\\Nexore-C\\GSS\\livekit-meeting-t3\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\_PhamDinhVan\\Week1\\livekit-meeting-t3\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
