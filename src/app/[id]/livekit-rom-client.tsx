@@ -1,7 +1,7 @@
-// src/app/[id]/livekit-rom-client.tsx
+//src/app/[id]/livekit-rom-client.tsx
 "use client";
 
-import { useEffect, useRef, useState, type JSX } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Room,
   createLocalTracks,
@@ -9,69 +9,135 @@ import {
   type LocalTrack,
 } from "livekit-client";
 import { registerRoomEvents } from "./livekit-events";
+import { useRouter } from "next/navigation";
+import { startLocalAgent, stopLocalAgent } from "./agent";
 
-const LIVEKIT_URL = "ws://192.168.1.6:7880";
+const LIVEKIT_URL =
+  process.env.NEXT_PUBLIC_LIVEKIT_URL ??
+  "wss://meeting-t3-14zfyes1.livekit.cloud";
 
 interface LivekitRoomProps {
   roomName: string;
   token: string;
 }
 
-export function LivekitRoom({
-  roomName,
-  token,
-}: LivekitRoomProps): JSX.Element {
+export function LivekitRoom({ roomName, token }: LivekitRoomProps) {
+  const router = useRouter();
+
   const [status, setStatus] = useState("Đang khởi tạo...");
   const localMediaRef = useRef<HTMLDivElement>(null!);
   const room = useRef<Room | null>(null);
   const publishedLocalTracks = useRef<LocalTrack[]>([]);
   const isConnected = useRef(false);
+  const unmounted = useRef(false);
 
-  const performDisconnect = (): void => {
+  const performDisconnect = async () => {
+    if (unmounted.current) return;
+
+    unmounted.current = true;
+    stopLocalAgent();
+
     const r = room.current;
     if (r && r.state !== ConnectionState.Disconnected) {
-      void r.disconnect();
-      publishedLocalTracks.current.forEach((t) => {
-        t.detach();
-        t.stop();
-      });
-      publishedLocalTracks.current = [];
+      r.removeAllListeners();
+      try {
+        await r.disconnect();
+      } catch {}
     }
-    isConnected.current = false;
+
+    publishedLocalTracks.current.forEach((track) => {
+      try {
+        track.stop();
+        track.detach?.();
+      } catch {}
+    });
+
+    publishedLocalTracks.current = [];
     if (localMediaRef.current) localMediaRef.current.innerHTML = "";
+
+    isConnected.current = false;
     setStatus("Đã ngắt kết nối");
+
+    if (window.history.length > 1) router.back();
+    else router.push("/");
   };
 
   useEffect(() => {
-    const doConnect = async (): Promise<void> => {
+    let cancelled = false;
+
+    const doConnect = async () => {
       setStatus(`Đang kết nối vào phòng ${roomName}...`);
 
       try {
-        room.current = new Room({
+        const lkRoom = new Room({
           dynacast: true,
           adaptiveStream: false,
         });
 
-        const activeRoom = room.current;
+        if (cancelled) return;
 
-        registerRoomEvents(activeRoom, {
+        room.current = lkRoom;
+
+        registerRoomEvents(lkRoom, {
           setStatus,
           localMediaRef,
           publishedLocalTracks,
           isConnected,
         });
 
-        await activeRoom.connect(LIVEKIT_URL, token);
+        await lkRoom.connect(LIVEKIT_URL, token);
+
+        console.log("[CLIENT] Connected");
+        isConnected.current = true;
+
+        startLocalAgent((reply) => {
+          lkRoom.localParticipant.publishData(
+            new TextEncoder().encode(
+              JSON.stringify({ type: "agent_message", text: reply }),
+            ),
+            { reliable: true }
+          );
+        });
+
+        const tracks = await createLocalTracks({
+          audio: true,
+          video: false,
+        });
+
+        tracks.forEach((track) => {
+          lkRoom.localParticipant.publishTrack(track);
+          publishedLocalTracks.current.push(track);
+        });
       } catch (err) {
+        console.error(err);
         setStatus(`Failed: ${(err as Error).message}`);
       }
     };
 
-    void doConnect();
+    doConnect();
 
     return () => {
-      performDisconnect();
-      room.current = null;
+      cancelled = true;
+      if (!isConnected.current || unmounted.current) return;
+
+      unmounted.current = true;
+
+      const r = room.current;
+      if (r) {
+        r.removeAllListeners();
+        try {
+          r.disconnect();
+        } catch {}
+      }
+
+      publishedLocalTracks.current.forEach((track) => {
+        try {
+          track.stop();
+        } catch {}
+      });
+      publishedLocalTracks.current = [];
+
+      stopLocalAgent();
     };
   }, [roomName, token]);
 

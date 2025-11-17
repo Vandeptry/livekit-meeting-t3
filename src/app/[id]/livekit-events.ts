@@ -2,11 +2,7 @@
 import {
   Room,
   RoomEvent,
-  Track,
-  ConnectionState,
   RemoteParticipant,
-  type LocalTrack,
-  createLocalTracks,
 } from "livekit-client";
 
 export function registerRoomEvents(
@@ -14,45 +10,16 @@ export function registerRoomEvents(
   opts: {
     setStatus: (msg: string) => void;
     localMediaRef: React.RefObject<HTMLDivElement>;
-    publishedLocalTracks: React.MutableRefObject<LocalTrack[]>;
+    publishedLocalTracks: React.MutableRefObject<any[]>;
     isConnected: React.MutableRefObject<boolean>;
   },
 ): void {
+
   const { setStatus, localMediaRef, publishedLocalTracks, isConnected } = opts;
 
-  // Không async trực tiếp ở callback
   room.on(RoomEvent.Connected, () => {
-    void (async () => {
-      isConnected.current = true;
-      setStatus("Đã kết nối — Agent sẽ vào phòng");
-
-      try {
-        const tracks = await createLocalTracks({
-          video: true,
-          audio: true,
-        });
-
-        if (room.state !== ConnectionState.Connected) {
-          tracks.forEach((t) => t.stop());
-          return;
-        }
-
-        const videoTrack = tracks.find((t) => t.kind === Track.Kind.Video);
-        if (videoTrack && localMediaRef.current) {
-          localMediaRef.current.innerHTML = "";
-          localMediaRef.current.appendChild(videoTrack.attach());
-        }
-
-        for (const t of tracks) {
-          await room.localParticipant.publishTrack(t);
-        }
-
-        publishedLocalTracks.current = tracks;
-        setStatus("Bạn đã vào phòng — đang chờ Agent...");
-      } catch {
-        setStatus("Không lấy được thiết bị (nhưng vẫn vào phòng OK)");
-      }
-    })();
+    isConnected.current = true;
+    setStatus("Đã kết nối vào phòng");
   });
 
   room.on(RoomEvent.Reconnecting, () => setStatus("Đang reconnect..."));
@@ -61,6 +28,19 @@ export function registerRoomEvents(
   room.on(RoomEvent.Disconnected, () => {
     isConnected.current = false;
     setStatus("Bạn đã rời phòng");
+
+    if (localMediaRef.current) {
+      localMediaRef.current.innerHTML = "";
+    }
+
+    publishedLocalTracks.current.forEach((t) => {
+      try {
+        t.stop();
+        t.detach?.();
+      } catch {}
+    });
+
+    publishedLocalTracks.current = [];
   });
 
   room.on(RoomEvent.ParticipantConnected, (p: RemoteParticipant) => {
@@ -74,14 +54,14 @@ export function registerRoomEvents(
   room.on(RoomEvent.DataReceived, (payload, participant) => {
     try {
       const txt = new TextDecoder().decode(payload);
-      const data = JSON.parse(txt) as Record<string, unknown>;
+      const data = JSON.parse(txt);
 
       if (data.type === "agent_message") {
-        setStatus(`🤖 Agent: ${String(data.text)}`);
+        setStatus(`🤖 Agent: ${data.text}`);
         return;
       }
 
-      console.log("Data:", data, "from:", participant?.identity);
+      console.log("Received data:", data, "from", participant?.identity);
     } catch {
       console.error("Data parse error");
     }

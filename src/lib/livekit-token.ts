@@ -1,33 +1,32 @@
-// src/lib/livekit-token.ts
-import { AccessToken, type VideoGrant } from "livekit-server-sdk";
-// KEY TĨNH
-const LIVEKIT_API_KEY = "devkey";
-const LIVEKIT_API_SECRET = "phamdinhvan19022004quadeptrySUPER-SECRET-KEY-99999";
+//src/lib/livekit-token.ts
+import { AccessToken } from "livekit-server-sdk";
+import { env } from "~/env";
 
-// Validate
-if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
-  throw new Error("LIVEKIT API KEY/SECRET is missing");
-}
-
-export async function createToken(
-  roomName: string,
+export function createToken(
+  room: string,
   identity: string,
-  isAgent = false,
-  ttl = 3600,
-): Promise<string> {
-  const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+  isAgent: boolean,
+  ttl: number,
+) {
+  console.log(`[LIVEKIT_TOKEN] Creating token for identity: ${identity}, room: ${room}`);
+
+  if (!env.LIVEKIT_API_KEY || !env.LIVEKIT_API_SECRET) {
+      console.error("[LIVEKIT_TOKEN] API Keys are NOT loaded from environment.");
+  }
+
+  const at = new AccessToken(env.LIVEKIT_API_KEY, env.LIVEKIT_API_SECRET, {
     identity,
     ttl,
   });
 
-  const grant: VideoGrant = {
+  at.addGrant({
+    room,
     roomJoin: true,
-    room: roomName,
-    canPublish: !isAgent,
-    canPublishData: true,
+    canPublish: true,
     canSubscribe: true,
-  };
+    canPublishData: true,
+  });
 
-  token.addGrant(grant);
-  return token.toJwt();
+  console.log("[LIVEKIT_TOKEN] AccessToken created successfully.");
+  return at.toJwt();
 }

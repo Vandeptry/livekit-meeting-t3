@@ -8,9 +8,9 @@ import {
 import { fileURLToPath } from "node:url";
 import { RoomEvent } from "livekit-client";
 
-const LIVEKIT_URL = "ws://192.168.1.6:7880";
-const LIVEKIT_API_KEY = "devkey";
-const LIVEKIT_API_SECRET = "phamdinhvan19022004quadeptrySUPER-SECRET-KEY-99999";
+const LIVEKIT_URL = "wss://meeting-t3-e6pf3j9k.livekit.cloud";
+const LIVEKIT_API_KEY = "APIxzUTEitj83AJ";
+const LIVEKIT_API_SECRET = "u0EIcDhAkaLP7vRAIpYWAyH7rK9q1HOKf6ZPB7Ngt3Z";
 
 const agent = defineAgent({
   entry: async (ctx: JobContext) => {
@@ -44,9 +44,22 @@ const agent = defineAgent({
     room.on(RoomEvent.ParticipantDisconnected, (p) =>
       console.log("[AGENT] Left:", p.identity),
     );
+    room.on(RoomEvent.TrackSubscribed, async (track, pub, participant) => {
+      if (typeof track.kind === 'string' && track.kind === "audio") {
+        console.log("[AGENT] Receiving audio from:", participant.identity);
+
+        const mediaStreamTrack = (track as any).mediaStreamTrack;
+        if (mediaStreamTrack) {
+          // todo
+        }
+      }
+    });
   },
 });
 
+export default agent;
+
+// === WORKER ===
 cli.runApp(
   new WorkerOptions({
     agent: fileURLToPath(import.meta.url),
