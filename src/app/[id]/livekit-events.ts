@@ -1,4 +1,4 @@
-//src/app/[id]/livekit-events.ts
+// src/app/[id]/livekit-events.ts
 import {
   Room,
   RoomEvent,
@@ -57,7 +57,7 @@ export function registerRoomEvents(
       const data = JSON.parse(txt);
 
       if (data.type === "agent_message") {
-        setStatus(`🤖 Agent: ${data.text}`);
+        setStatus(`Agent: ${data.text}`);
         return;
       }
 

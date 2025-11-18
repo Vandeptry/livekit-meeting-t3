@@ -1,70 +1,63 @@
 // agent-service/index.ts
 import {
+  defineAgent,
   type JobContext,
+  type JobProcess,
   WorkerOptions,
   cli,
-  defineAgent,
+  voice
 } from "@livekit/agents";
+import * as openai from "@livekit/agents-plugin-openai";
 import { fileURLToPath } from "node:url";
-import { RoomEvent } from "livekit-client";
+import dotenv from "dotenv";
+import path from "path";
 
-const LIVEKIT_URL = "wss://meeting-t3-e6pf3j9k.livekit.cloud";
-const LIVEKIT_API_KEY = "APIxzUTEitj83AJ";
-const LIVEKIT_API_SECRET = "u0EIcDhAkaLP7vRAIpYWAyH7rK9q1HOKf6ZPB7Ngt3Z";
+dotenv.config({
+  path: path.resolve(process.cwd(), ".env"),
+});
 
 const agent = defineAgent({
+  prewarm: async (_proc: JobProcess) => {
+    console.log("[AGENT] Prewarm...");
+  },
+
   entry: async (ctx: JobContext) => {
-    console.log("[AGENT] Job started in room:", ctx.job.room?.name);
+    console.log("[AGENT] Job started for room:", ctx.job.room?.name);
 
-    await ctx.connect();
-    const room = ctx.room;
-    if (!room) return;
+    const brain = new voice.Agent({
+      instructions: `
+        Bạn là trợ lý AI tiếng Việt.
+        Trả lời ngắn và rõ ràng.
+        Khi bắt đầu chỉ cần nói: "Xin chào bạn".
+      `,
+    });
 
-    console.log("[AGENT] Agent connected to room:", room.name);
+    const session = new voice.AgentSession({
+      llm: new openai.realtime.RealtimeModel({
+        voice: "alloy",
+      }),
+    });
 
-    // Gửi lời chào
-    if (room.localParticipant) {
-      await room.localParticipant.publishData(
-        new TextEncoder().encode(
-          JSON.stringify({
-            type: "agent_message",
-            text: "Xin chào! Agent đã có mặt.",
-          }),
-        ),
-        { reliable: true },
-      );
-    }
+    await session.start({
+      agent: brain,
+      room: ctx.room,
+    });
 
-    console.log("[AGENT] Greeting sent");
+    console.log("[AGENT] Connected to room:", ctx.room?.name);
 
-    room.on(RoomEvent.ParticipantConnected, (p) =>
-      console.log("[AGENT] Joined:", p.identity),
-    );
-
-    room.on(RoomEvent.ParticipantDisconnected, (p) =>
-      console.log("[AGENT] Left:", p.identity),
-    );
-    room.on(RoomEvent.TrackSubscribed, async (track, pub, participant) => {
-      if (typeof track.kind === 'string' && track.kind === "audio") {
-        console.log("[AGENT] Receiving audio from:", participant.identity);
-
-        const mediaStreamTrack = (track as any).mediaStreamTrack;
-        if (mediaStreamTrack) {
-          // todo
-        }
-      }
+    await session.generateReply({
+      instructions: "Xin chào bạn",
     });
   },
 });
 
 export default agent;
 
-// === WORKER ===
 cli.runApp(
   new WorkerOptions({
     agent: fileURLToPath(import.meta.url),
-    wsURL: LIVEKIT_URL,
-    apiKey: LIVEKIT_API_KEY,
-    apiSecret: LIVEKIT_API_SECRET,
-  }),
+    wsURL: process.env.LIVEKIT_URL!,
+    apiKey: process.env.LIVEKIT_API_KEY!,
+    apiSecret: process.env.LIVEKIT_API_SECRET!,
+  })
 );

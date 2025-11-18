@@ -34,37 +34,16 @@ export const livekitRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       console.log(`[LIVEKIT_ROUTER] Request to join room: ${input.roomId} by ${input.identity}`);
+
       const room = ROOMS.find((r) => r.id === input.roomId);
-      if (!room) {
-        console.error(`[LIVEKIT_ROUTER] Room not found: ${input.roomId}`);
-        throw new Error("Phòng không tồn tại.");
-      }
+      if (!room) throw new Error("Phòng không tồn tại.");
 
-      const userToken = await createToken(
-        room.id,
-        input.identity,
-        false,
-        3600,
-      );
+      const userToken = await createToken(room.id, input.identity, false, 3600);
       console.log(`[LIVEKIT_ROUTER] User token generated for ${input.identity}`);
-
-      console.log(
-        `[BACKEND] User ${input.identity} requested to join ${room.id}`,
-      );
-
-      const agentIdentity = "meeting-agent";
-      const agentToken = await createToken(room.id, agentIdentity, true, 3600);
-      console.log(`[LIVEKIT_ROUTER] Agent token generated for ${agentIdentity}`);
-
-      console.log(
-        `[BACKEND] Agent should auto-join room ${room.id} (token generated).`,
-      );
 
       return {
         roomName: room.id,
         userToken,
-        agentToken,
-        agentTokenForWorker: agentToken,
       };
     }),
 });
