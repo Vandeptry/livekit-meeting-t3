@@ -5,9 +5,16 @@ import {
   type JobProcess,
   WorkerOptions,
   cli,
-  voice
+  voice,
 } from "@livekit/agents";
+
+import * as deepgram from "@livekit/agents-plugin-deepgram";
+import * as elevenlabs from "@livekit/agents-plugin-elevenlabs";
+import * as livekit from "@livekit/agents-plugin-livekit";
 import * as openai from "@livekit/agents-plugin-openai";
+import * as silero from "@livekit/agents-plugin-silero";
+import { BackgroundVoiceCancellation } from "@livekit/noise-cancellation-node";
+
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import path from "path";
@@ -15,39 +22,42 @@ import path from "path";
 dotenv.config({
   path: path.resolve(process.cwd(), ".env"),
 });
-
 const agent = defineAgent({
   prewarm: async (_proc: JobProcess) => {
-    console.log("[AGENT] Prewarm...");
+    console.log("[AGENT] Prewarm pipeline...");
   },
 
   entry: async (ctx: JobContext) => {
     console.log("[AGENT] Job started for room:", ctx.job.room?.name);
-
-    const brain = new voice.Agent({
+    const assistant = new voice.Agent({
       instructions: `
-        Bạn là trợ lý AI tiếng Việt.
-        Trả lời ngắn và rõ ràng.
-        Khi bắt đầu chỉ cần nói: "Xin chào bạn".
+        Bạn là trợ lý AI tiếng Việt, hỗ trợ người dùng trong cuộc gọi thoại.
+        Trả lời ngắn gọn, rõ ràng, xưng "mình" / "bạn" cho thân thiện.
+        Nếu nghe không rõ hoặc không hiểu thì hãy hỏi lại.
       `,
     });
-
+    const vad = (await silero.VAD.load()) as silero.VAD;
     const session = new voice.AgentSession({
-      llm: new openai.realtime.RealtimeModel({
-        voice: "alloy",
-      }),
+      vad,
+      stt: new deepgram.STT(),              // Deepgram STT
+      llm: new openai.LLM(),                // OpenAI LLM
+      tts: new elevenlabs.TTS(),            // ElevenLabs TTS
+      turnDetection: new livekit.turnDetector.MultilingualModel(),
     });
 
     await session.start({
-      agent: brain,
       room: ctx.room,
+      agent: assistant,
+      inputOptions: {
+        noiseCancellation: BackgroundVoiceCancellation(),
+      },
     });
+    await ctx.connect();
 
-    console.log("[AGENT] Connected to room:", ctx.room?.name);
+    console.log("[AGENT] Pipeline session started in room:", ctx.room?.name);
 
-    await session.generateReply({
-      instructions: "Xin chào bạn",
-    });
+    const handle = session.generateReply({ userInput: "Xin chào bạn, mình có thể giúp gì cho bạn?" });
+    await handle.waitForPlayout();
   },
 });
 
@@ -59,5 +69,5 @@ cli.runApp(
     wsURL: process.env.LIVEKIT_URL!,
     apiKey: process.env.LIVEKIT_API_KEY!,
     apiSecret: process.env.LIVEKIT_API_SECRET!,
-  })
+  }),
 );

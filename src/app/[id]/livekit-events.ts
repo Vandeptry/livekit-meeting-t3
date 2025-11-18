@@ -29,9 +29,7 @@ export function registerRoomEvents(
     isConnected.current = false;
     setStatus("Bạn đã rời phòng");
 
-    if (localMediaRef.current) {
-      localMediaRef.current.innerHTML = "";
-    }
+    if (localMediaRef.current) localMediaRef.current.innerHTML = "";
 
     publishedLocalTracks.current.forEach((t) => {
       try {
@@ -62,8 +60,6 @@ export function registerRoomEvents(
       }
 
       console.log("Received data:", data, "from", participant?.identity);
-    } catch {
-      console.error("Data parse error");
-    }
+    } catch {}
   });
 }

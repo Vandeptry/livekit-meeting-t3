@@ -1,4 +1,4 @@
-//src/app/[id]/livekit-rom-client.tsx
+// src/app/[id]/livekit-rom-client.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -17,18 +17,24 @@ export function LivekitRoom({ roomName, token }: LivekitRoomProps) {
     status,
     localMediaRef,
     agentAudioRef,
+    agentAudioTrack,
     performDisconnect,
     isConnected,
   } = useLivekitConnection(roomName, token);
 
+  console.log("[UI] agentAudioRef:", agentAudioRef.current);
+  console.log("[UI] agentAudioTrack:", agentAudioTrack.current);
+  console.log("[UI] isConnected:", isConnected.current);
+
   const {
     recording,
-    recordedUrl,
+    recordedUrlA,
+    recordedUrlB,
     transcript,
     startRecording,
     stopRecording,
     transcribe,
-  } = useRecorder(agentAudioRef);
+  } = useRecorder(agentAudioRef, agentAudioTrack);
 
   const exit = async () => {
     await performDisconnect();
@@ -65,15 +71,30 @@ export function LivekitRoom({ roomName, token }: LivekitRoomProps) {
         </button>
       )}
 
-      {recordedUrl && <audio controls src={recordedUrl} className="w-full mt-4" />}
+      {recordedUrlA && (
+        <div className="w-full mt-4">
+          <p className="text-white mb-1">Bản ghi A (User only)</p>
+          <audio controls src={recordedUrlA} className="w-full" />
+          <button
+            onClick={() => transcribe(recordedUrlA)}
+            className="mt-2 rounded-lg bg-green-600 p-2 text-white"
+          >
+            Xuất văn bản A
+          </button>
+        </div>
+      )}
 
-      {recordedUrl && !transcript && (
-        <button
-          onClick={transcribe}
-          className="mt-4 rounded-lg bg-green-600 p-3 text-lg font-bold text-white"
-        >
-          Xuất văn bản
-        </button>
+      {recordedUrlB && (
+        <div className="w-full mt-4">
+          <p className="text-white mb-1">Bản ghi B (Full)</p>
+          <audio controls src={recordedUrlB} className="w-full" />
+          <button
+            onClick={() => transcribe(recordedUrlB)}
+            className="mt-2 rounded-lg bg-green-600 p-2 text-white"
+          >
+            Xuất văn bản B
+          </button>
+        </div>
       )}
 
       {transcript && (

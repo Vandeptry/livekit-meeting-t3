@@ -25,19 +25,16 @@ export function useLivekitConnection(roomName: string, token: string) {
   const room = useRef<Room | null>(null);
   const publishedLocalTracks = useRef<LocalTrack[]>([]);
   const isConnected = useRef(false);
-  const unmounted = useRef(false);
+  const agentAudioTrack = useRef<MediaStreamTrack | null>(null);
 
-  const performDisconnect = async () => {
-    if (unmounted.current) return;
-    unmounted.current = true;
-
+  const hardDisconnect = async () => {
     const r = room.current;
-    if (r) {
+    if (!r) return;
+
+    try {
       r.removeAllListeners();
-      try {
-        await r.disconnect();
-      } catch {}
-    }
+      await r.disconnect();
+    } catch {}
 
     publishedLocalTracks.current.forEach((t) => {
       try {
@@ -45,15 +42,17 @@ export function useLivekitConnection(roomName: string, token: string) {
         t.detach?.();
       } catch {}
     });
+
     publishedLocalTracks.current = [];
+    isConnected.current = false;
 
     if (localMediaRef.current) localMediaRef.current.innerHTML = "";
-
-    isConnected.current = false;
     setStatus("Đã ngắt kết nối");
   };
 
   useEffect(() => {
+    let isUnmounted = false;
+
     const connect = async () => {
       setStatus(`Đang kết nối vào phòng ${roomName}...`);
 
@@ -61,9 +60,9 @@ export function useLivekitConnection(roomName: string, token: string) {
         const lkRoom = new Room({
           dynacast: true,
           adaptiveStream: false,
-          // @ts-expect-error
-          rtcConfig: {
-            iceTransportPolicy: "relay",
+          //@ts-expect-error
+          peerConnectionConfiguration: {
+            iceTransportPolicy: "all",
           },
         });
 
@@ -78,14 +77,17 @@ export function useLivekitConnection(roomName: string, token: string) {
 
         lkRoom.on(
           RoomEvent.TrackSubscribed,
-          (track, pub: RemoteTrackPublication, participant: RemoteParticipant) => {
-            if (track.kind === "audio" && participant.isAgent) {
+          (track, pub, participant) => {
+            if (track.kind === "audio" && participant.identity.includes("agent")) {
               track.attach(agentAudioRef.current);
+              agentAudioTrack.current = track.mediaStreamTrack;
             }
           }
-        );
+        );          
 
         await lkRoom.connect(LIVEKIT_URL, token);
+
+        if (isUnmounted) return; // tránh disconnect sớm
         isConnected.current = true;
 
         const tracks = await createLocalTracks({
@@ -105,22 +107,23 @@ export function useLivekitConnection(roomName: string, token: string) {
 
         setStatus("Đã kết nối");
       } catch (err: any) {
-        setStatus("Lỗi: " + err.message);
+        if (!isUnmounted) setStatus("Lỗi: " + err.message);
       }
     };
 
     connect();
 
     return () => {
-      void performDisconnect();
+      isUnmounted = true;
     };
-  }, [roomName, token]);
+  }, []);
 
   return {
     status,
     localMediaRef,
     agentAudioRef,
-    performDisconnect,
+    agentAudioTrack,
+    performDisconnect: hardDisconnect,
     isConnected,
   };
 }
