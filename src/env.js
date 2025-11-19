@@ -32,6 +32,8 @@ export const env = createEnv({
     LIVEKIT_API_SECRET: z.string(),
     LIVEKIT_URL: z.string(),
     OPENAI_API_KEY: z.string(),
+    DEEPGRAM_API_KEY: z.string(),
+    ELEVENLABS_API_KEY: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -67,6 +69,8 @@ export const env = createEnv({
     LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET,
     LIVEKIT_URL: process.env.LIVEKIT_URL,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    DEEPGRAM_API_KEY: process.env.DEEPGRAM_API_KEY,
+    ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**

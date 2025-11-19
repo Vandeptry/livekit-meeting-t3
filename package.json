@@ -12,7 +12,7 @@
     "db:studio": "prisma studio",
     "dev:next": "next dev --turbo",
     "dev:agent": "tsx agent-service/index.ts dev",
-    "dev": "concurrently \"npm run dev:next\" \"npm run dev:agent\"",
+    "dev": "next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "postinstall": "prisma generate",
@@ -24,8 +24,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.2",
-    "@livekit/agents-plugin-deepgram": "^1.0.18",
-    "@livekit/agents-plugin-elevenlabs": "^1.0.18",
+    "@livekit/agents": "^1.0.0-next.7",
     "@livekit/components-react": "^2.9.16",
     "@livekit/rtc-node": "^0.13.21",
     "@prisma/client": "^6.6.0",
@@ -48,7 +47,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
-    "@livekit/agents": "^1.0.18",
     "@tailwindcss/postcss": "^4.0.15",
     "@types/node": "^20.19.25",
     "@types/react": "^19.0.0",

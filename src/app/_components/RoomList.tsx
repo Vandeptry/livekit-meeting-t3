@@ -38,7 +38,7 @@ export function RoomList() {
     setError(null);
 
     if (!identity.trim()) {
-      setError("Vui lòng nhập Tên định danh.");
+      setError("Vui lòng nhập Tên.");
       return;
     }
     if (!selectedRoomId) {
@@ -63,7 +63,7 @@ export function RoomList() {
         
         <div>
           <label htmlFor="identity" className="mb-2 block text-sm font-medium text-gray-300">
-            Tên Định danh (Identity)
+            Tên Định danh
           </label>
           <input
             id="identity"
