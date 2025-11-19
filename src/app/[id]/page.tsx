@@ -1,23 +1,24 @@
-// src/app/[id]/page.tsx
+//src/app/[id]/page.tsx
 import { LivekitRoom } from "./livekit-room";
+import { api } from "~/trpc/server";
+import { createToken } from "~/lib/livekit-token";
 
 export default async function RoomPage(props: {
-  searchParams: Promise<{ token?: string; identity?: string }>;
   params: Promise<{ id: string }>;
 }) {
-  const searchParamsResolved = await props.searchParams;
-  const paramsResolved = await props.params;
+  const { id: roomName } = await props.params;
 
-  const token = searchParamsResolved.token;
-  const roomName = paramsResolved.id;
+  const { roomName: validatedRoom } = await api.livekit.joinRoom({
+    roomId: roomName,
+    identity: "Van",
+  });
 
-  if (!token) {
-    return (
-      <div className="flex h-screen items-center justify-center text-white">
-        Thiếu token.
-      </div>
-    );
-  }
+  const userToken = await createToken(validatedRoom, "Van", false, 3600);
 
-  return <LivekitRoom roomName={roomName} token={token} />;
+  return (
+    <LivekitRoom
+      roomName={validatedRoom}
+      token={userToken}
+    />
+  );
 }
